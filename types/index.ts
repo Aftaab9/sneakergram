@@ -50,6 +50,22 @@ export enum ServiceCategory {
   RESTORATION = 'restoration'
 }
 
+export enum EventType {
+  RELEASE = 'release',
+  RAFFLE = 'raffle',
+  MEETUP = 'meetup',
+  CONVENTION = 'convention',
+  WORKSHOP = 'workshop',
+  SALE = 'sale'
+}
+
+export enum EventStatus {
+  UPCOMING = 'upcoming',
+  LIVE = 'live',
+  ENDED = 'ended',
+  CANCELLED = 'cancelled'
+}
+
 export enum SneakerCategory {
   JORDAN = 'jordan',
   NIKE = 'nike',
@@ -197,6 +213,28 @@ export type Service = {
   price: number;
   turnaroundTime: string;
   category: ServiceCategory;
+};
+
+export type Event = {
+  id: string;
+  title: string;
+  description: string;
+  type: EventType;
+  status: EventStatus;
+  date: Date;
+  endDate?: Date;
+  location: string;
+  venue?: string;
+  organizer: string;
+  organizerId: string;
+  image: string;
+  sneakers?: string[];
+  attendees: string[];
+  maxAttendees?: number;
+  price?: number;
+  registrationUrl?: string;
+  tags: string[];
+  createdAt: Date;
 };
 
 // Additional Utility Types
@@ -351,4 +389,18 @@ export type MessageState = {
   loadConversations: () => Promise<void>;
   loadMessages: (conversationId: string) => Promise<void>;
   sendMessage: (conversationId: string, text: string, type?: MessageType) => Promise<void>;
+};
+
+export type EventState = {
+  events: Event[];
+  filters: {
+    type?: EventType;
+    status?: EventStatus;
+    dateRange?: [Date, Date];
+  };
+  loading: boolean;
+  error: string | null;
+  loadEvents: () => Promise<void>;
+  rsvpEvent: (eventId: string) => void;
+  unrsvpEvent: (eventId: string) => void;
 };
