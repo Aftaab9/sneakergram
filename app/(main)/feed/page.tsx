@@ -11,8 +11,13 @@ import Image from 'next/image';
 import { useFeedStore } from '@/stores/feedStore';
 import { mockUsers } from '@/lib/mockData';
 import { PostCard } from '@/components/feed/PostCard';
+import { SneakerPoll } from '@/components/feed/SneakerPoll';
+import { SneakerOfTheWeek } from '@/components/feed/SneakerOfTheWeek';
+import { ReelsSection } from '@/components/feed/ReelsSection';
+import { QuickActions } from '@/components/ui/QuickActions';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getCurrentUser } from '@/stores/authStore';
+import { BEST_SNEAKER_IMAGES } from '@/lib/bestImages';
 
 // Stories component - Instagram-like
 function Stories() {
@@ -194,8 +199,21 @@ export default function FeedPage() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [displayedPosts, setDisplayedPosts] = useState<typeof posts>([]);
+  const [pollVote, setPollVote] = useState<string | undefined>();
   
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Poll data
+  const pollOptions = [
+    { id: '1', sneaker: 'Air Jordan 1 Chicago', image: BEST_SNEAKER_IMAGES.jordanBlackRed, votes: 1247 },
+    { id: '2', sneaker: 'Nike Dunk Low Panda', image: BEST_SNEAKER_IMAGES.airForces1, votes: 892 },
+    { id: '3', sneaker: 'Yeezy 350 V2 Onyx', image: BEST_SNEAKER_IMAGES.adidasSuperstar, votes: 1534 },
+  ];
+
+  const handlePollVote = (optionId: string) => {
+    setPollVote(optionId);
+    // In real app, send to backend
+  };
 
   useEffect(() => {
     if (posts.length === 0) {
@@ -280,14 +298,41 @@ export default function FeedPage() {
             )}
 
             <AnimatePresence mode="popLayout">
-              {displayedPosts.map((post) => (
+              {displayedPosts.map((post, index) => (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
                 >
+                  {/* Sneaker of the Week - Show at top */}
+                  {index === 0 && (
+                    <div className="px-4 py-2">
+                      <SneakerOfTheWeek />
+                    </div>
+                  )}
+                  
                   <PostCard post={post} />
+                  
+                  {/* Insert Reels after 1st post */}
+                  {index === 1 && (
+                    <div className="px-4 py-2">
+                      <ReelsSection />
+                    </div>
+                  )}
+                  
+                  {/* Insert poll after 4th post */}
+                  {index === 4 && (
+                    <div className="px-4 py-2">
+                      <SneakerPoll
+                        question="🔥 Sneaker of the Week - Vote Now!"
+                        options={pollOptions}
+                        totalVotes={pollOptions.reduce((sum, opt) => sum + opt.votes, 0)}
+                        userVote={pollVote}
+                        onVote={handlePollVote}
+                      />
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -309,6 +354,9 @@ export default function FeedPage() {
         {/* Suggested Sidebar - Desktop only */}
         <SuggestedSidebar />
       </div>
+
+      {/* Quick Actions Button */}
+      <QuickActions />
     </div>
   );
 }

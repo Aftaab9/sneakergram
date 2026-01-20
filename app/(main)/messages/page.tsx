@@ -5,6 +5,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ChatList } from '@/components/messages/ChatList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import { Send, Edit } from 'lucide-react';
@@ -13,6 +14,9 @@ import { getUserById } from '@/lib/mockData';
 import { getCurrentUser } from '@/stores/authStore';
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams();
+  const conversationParam = searchParams.get('conversation');
+  
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +28,17 @@ export default function MessagesPage() {
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+
+  // Handle conversation from URL parameter
+  useEffect(() => {
+    if (conversationParam && conversations.length > 0) {
+      const conversation = conversations.find(c => c.id === conversationParam);
+      if (conversation) {
+        setSelectedConversationId(conversationParam);
+        setIsMobileView(true);
+      }
+    }
+  }, [conversationParam, conversations]);
 
   const handleSelectConversation = (conversationId: string) => {
     setSelectedConversationId(conversationId);

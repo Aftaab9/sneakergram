@@ -12,6 +12,7 @@ import { Plus, Filter, Search, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMarketplaceStore } from '@/stores/marketplaceStore';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useMessageStore } from '@/stores/messageStore';
 import { ListingCard, CreateListing } from '@/components/marketplace';
 import { Button, ScrollReveal } from '@/components/ui';
 import { Modal } from '@/components/ui/Modal';
@@ -51,9 +52,10 @@ function ListingSkeleton() {
 interface ListingDetailModalProps {
   listing: Listing;
   onClose: () => void;
+  onContact: (sellerId: string) => void;
 }
 
-function ListingDetailModal({ listing, onClose }: ListingDetailModalProps) {
+function ListingDetailModal({ listing, onClose, onContact }: ListingDetailModalProps) {
   const seller = getUserById(listing.sellerId);
   const sneaker = getSneakerById(listing.sneakerId);
   const { placeBid } = useMarketplaceStore();
@@ -71,9 +73,8 @@ function ListingDetailModal({ listing, onClose }: ListingDetailModalProps) {
     }
   };
 
-  const handleContact = () => {
-    toast.success('Message feature coming soon!');
-    // TODO: Navigate to messages with seller
+  const handleContactClick = () => {
+    onContact(listing.sellerId);
   };
 
   return (
@@ -84,7 +85,7 @@ function ListingDetailModal({ listing, onClose }: ListingDetailModalProps) {
           seller={seller}
           sneaker={sneaker}
           onBid={handleBid}
-          onContact={handleContact}
+          onContact={handleContactClick}
         />
       </div>
     </Modal>
@@ -98,6 +99,7 @@ export default function MarketplacePage() {
   const router = useRouter();
   const { listings, loading, loadListings, setFilter, placeBid } = useMarketplaceStore();
   const { unreadCount, loadNotifications } = useNotificationStore();
+  const { createConversation } = useMessageStore();
   
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
@@ -170,9 +172,13 @@ export default function MarketplacePage() {
   /**
    * Handle contact seller
    */
-  const handleContact = () => {
-    toast.success('Message feature coming soon!');
-    // TODO: Navigate to messages with seller
+  const handleContact = (sellerId: string) => {
+    // Create or get existing conversation with seller
+    const conversationId = createConversation(sellerId);
+    
+    // Navigate to messages with the conversation
+    router.push(`/messages?conversation=${conversationId}`);
+    toast.success('Opening conversation...');
   };
 
   /**
@@ -326,7 +332,11 @@ export default function MarketplacePage() {
 
       {/* Modals */}
       {selectedListing && (
-        <ListingDetailModal listing={selectedListing} onClose={() => setSelectedListing(null)} />
+        <ListingDetailModal 
+          listing={selectedListing} 
+          onClose={() => setSelectedListing(null)}
+          onContact={handleContact}
+        />
       )}
       <CreateListing isOpen={isCreateListingOpen} onClose={() => setIsCreateListingOpen(false)} />
     </div>

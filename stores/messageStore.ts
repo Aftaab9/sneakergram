@@ -181,13 +181,22 @@ export const useMessageStore = create<MessageState>((set, get) => ({
    */
   sendMessage: (conversationId: string, text: string, type: MessageType = MessageType.TEXT, listingId?: string, offerAmount?: number) => {
     const currentUser = getCurrentUser();
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.error('Cannot send message: User not authenticated');
+      return;
+    }
 
     const conversation = get().conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
+    if (!conversation) {
+      console.error('Cannot send message: Conversation not found');
+      return;
+    }
 
     const receiverId = conversation.participants.find(id => id !== currentUser.id);
-    if (!receiverId) return;
+    if (!receiverId) {
+      console.error('Cannot send message: Receiver not found');
+      return;
+    }
 
     const newMessage: Message = {
       id: generateMessageId(),
@@ -202,22 +211,27 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       read: false,
     };
 
-    set(state => ({
-      messages: {
-        ...state.messages,
-        [conversationId]: [...(state.messages[conversationId] || []), newMessage],
-      },
-      conversations: state.conversations.map(conv => {
-        if (conv.id === conversationId) {
-          return {
-            ...conv,
-            lastMessage: text,
-            lastMessageTime: new Date(),
-          };
-        }
-        return conv;
-      }),
-    }));
+    // Update state with new message
+    set(state => {
+      const currentMessages = state.messages[conversationId] || [];
+      
+      return {
+        messages: {
+          ...state.messages,
+          [conversationId]: [...currentMessages, newMessage],
+        },
+        conversations: state.conversations.map(conv => {
+          if (conv.id === conversationId) {
+            return {
+              ...conv,
+              lastMessage: text,
+              lastMessageTime: new Date(),
+            };
+          }
+          return conv;
+        }),
+      };
+    });
   },
 
   /**
