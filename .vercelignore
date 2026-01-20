@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs (Vercel builds on their servers)
+.next/
+out/
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage/
+
+# Development files
+.kiro/
+.vscode/
+*.md
+!README.md
+
+# Large data folders
+public/data/kaggle/
+3d_data/source/
+
+# Misc
+.git/
+.DS_Store
+*.log
+.env.local
+.env*.local

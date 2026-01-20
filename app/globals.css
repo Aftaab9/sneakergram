@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Instagram-like glassmorphism */
+  .glass {
+    @apply bg-card/80 backdrop-blur-md border border-border;
+  }
+
+  .glass-strong {
+    @apply bg-card/90 backdrop-blur-lg border border-border;
+  }
+
+  .glass-subtle {
+    @apply bg-card/40 backdrop-blur-sm border border-border/50;
+  }
+
+  /* Instagram blue glow */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(0, 149, 246, 0.3);
+  }
+
+  .glow-primary-lg {
+    box-shadow: 0 0 40px rgba(0, 149, 246, 0.4);
+  }
+
+  /* Instagram gradient for stories */
+  .gradient-story {
+    background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF, #515BD4);
+  }
+
+  .gradient-story-ring {
+    background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF);
+    padding: 2px;
+    border-radius: 50%;
+  }
+
+  /* Dark gradient backgrounds */
+  .gradient-dark {
+    background: linear-gradient(180deg, #000000 0%, #121212 100%);
+  }
+
+  /* Scrollbar styling - minimal like Instagram */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Text gradients */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF);
+  }
+
+  /* Shimmer effect for loading states */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(
+      to right,
+      #121212 0%,
+      #1A1A1A 20%,
+      #121212 40%,
+      #121212 100%
+    );
+    background-size: 1000px 100%;
+  }
+
+  /* Safe area padding for notched devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 149, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 149, 246, 0.6);
+  }
+}
+
+@keyframes heart-beat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-heart-beat {
+  animation: heart-beat 0.3s ease-in-out;
+}
+
+/* Instagram-like story ring */
+.story-ring {
+  background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF, #515BD4);
+  padding: 3px;
+  border-radius: 50%;
+}
+
+.story-ring-inner {
+  background: #000;
+  padding: 2px;
+  border-radius: 50%;
+}
+
+/* Like animation */
+@keyframes like-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-like-pop {
+  animation: like-pop 0.8s ease-out forwards;
+}
