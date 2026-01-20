@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Search, ShoppingBag, User, Sparkles } from 'lucide-react';
+import { Home, Search, ShoppingBag, User, Users } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -17,8 +17,8 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { name: 'Home', icon: Home, href: '/feed' },
   { name: 'Search', icon: Search, href: '/explore' },
+  { name: 'Community', icon: Users, href: '/community' },
   { name: 'Marketplace', icon: ShoppingBag, href: '/marketplace' },
-  { name: 'Services', icon: Sparkles, href: '/services' },
   { name: 'Profile', icon: User, href: '/profile' },
 ];
 
