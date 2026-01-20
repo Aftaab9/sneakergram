@@ -1,22 +1,25 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 
-// Dynamically import 3D components to avoid SSR issues
-const Scene3DLanding = dynamic(() => import('@/components/3d/Scene3DLanding'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center">
-      <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  ),
-});
+// Dynamically import 3D component with no SSR
+const Scene3DLanding = dynamic(
+  () => import('@/components/3d/Scene3DLanding').then(mod => mod.default),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  }
+);
 
-// Fallback images if 3D doesn't load
+// Fallback images
 const LANDING_IMAGES = [
   '/data/best/360_F_410655365_MjietOoPZAMAdqA74M6EXqRL3F8g5dHH.jpg',
   '/data/best/air jordan red.png',
@@ -25,12 +28,27 @@ const LANDING_IMAGES = [
   '/data/best/stylish-yellow-black-sneakers-free-png.png',
 ];
 
+// Fixed particle positions to avoid hydration mismatch
+const PARTICLE_POSITIONS = [
+  { x: 10, y: 20 }, { x: 25, y: 45 }, { x: 40, y: 15 }, { x: 55, y: 70 },
+  { x: 70, y: 30 }, { x: 85, y: 55 }, { x: 15, y: 80 }, { x: 30, y: 10 },
+  { x: 45, y: 60 }, { x: 60, y: 25 }, { x: 75, y: 85 }, { x: 90, y: 40 },
+  { x: 5, y: 50 }, { x: 20, y: 75 }, { x: 35, y: 35 }, { x: 50, y: 90 },
+  { x: 65, y: 5 }, { x: 80, y: 65 }, { x: 95, y: 20 }, { x: 12, y: 95 },
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const [isZooming, setIsZooming] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const [use3D, setUse3D] = useState(true);
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
+  const [mounted, setMounted] = useState(false);
+
+  // Mark as mounted after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -55,49 +73,50 @@ export default function LandingPage() {
     setTimeout(() => router.push('/login'), 600);
   };
 
+  const handle3DError = () => {
+    setUse3D(false);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20" />
       
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-primary/20 rounded-full"
-            initial={{
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 800),
-            }}
-            animate={{
-              y: [null, -100],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+      {/* Animated Background Particles - Only render after mount */}
+      {mounted && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {PARTICLE_POSITIONS.map((pos, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-primary/20 rounded-full"
+              style={{
+                left: `${pos.x}%`,
+                top: `${pos.y}%`,
+              }}
+              animate={{
+                y: [-20, -100, -20],
+                opacity: [0.2, 0.8, 0.2],
+              }}
+              transition={{
+                duration: 3 + (i % 3),
+                repeat: Infinity,
+                delay: i * 0.2,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 3D Sneaker Model or Fallback Image */}
       <div className="absolute inset-0 flex items-center justify-center">
-        {use3D ? (
+        {mounted && use3D ? (
           <div className="w-full h-full max-w-[600px] max-h-[600px]">
-            <Suspense fallback={
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            }>
-              <Scene3DLanding 
-                mousePosition={mousePosition} 
-                isZooming={isZooming}
-                onError={() => setUse3D(false)}
-              />
-            </Suspense>
+            <Scene3DLanding 
+              mousePosition={mousePosition} 
+              isZooming={isZooming}
+              onError={handle3DError}
+            />
           </div>
         ) : (
           <motion.div
@@ -127,7 +146,7 @@ export default function LandingPage() {
 
       {/* UI Overlay */}
       {!isZooming && (
-        <div className="absolute inset-0 flex flex-col items-center justify-between py-16 z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-between py-16 z-10 pointer-events-none">
           <motion.div
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -148,15 +167,17 @@ export default function LandingPage() {
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="flex flex-col items-center gap-4"
+            className="flex flex-col items-center gap-4 pointer-events-auto"
           >
             {/* 3D Toggle */}
-            <button
-              onClick={() => setUse3D(!use3D)}
-              className="text-xs text-muted hover:text-foreground transition-colors mb-2"
-            >
-              {use3D ? '🎮 3D Mode' : '🖼️ 2D Mode'} - Tap to switch
-            </button>
+            {mounted && (
+              <button
+                onClick={() => setUse3D(!use3D)}
+                className="text-xs text-muted hover:text-foreground transition-colors mb-2"
+              >
+                {use3D ? '🎮 3D Mode' : '🖼️ 2D Mode'} - Tap to switch
+              </button>
+            )}
 
             <motion.button
               whileHover={{ scale: 1.05 }}
