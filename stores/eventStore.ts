@@ -1,6 +1,23 @@
 import { create } from 'zustand';
-import { Event, EventState, EventType, EventStatus } from '@/types';
+import { Event, EventState } from '@/types';
 import { mockEvents } from '@/lib/mockData';
+
+// Define locally to avoid import issues with Vercel build cache
+enum EventType {
+  RELEASE = 'release',
+  RAFFLE = 'raffle',
+  MEETUP = 'meetup',
+  CONVENTION = 'convention',
+  WORKSHOP = 'workshop',
+  SALE = 'sale'
+}
+
+enum EventStatus {
+  UPCOMING = 'upcoming',
+  LIVE = 'live',
+  ENDED = 'ended',
+  CANCELLED = 'cancelled'
+}
 
 export const useEventStore = create<EventState>((set, get) => ({
   events: [],

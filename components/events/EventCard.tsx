@@ -1,6 +1,23 @@
 'use client';
 
-import { Event, EventType, EventStatus } from '@/types';
+import { Event } from '@/types';
+
+// Define locally to avoid import issues
+enum EventType {
+  RELEASE = 'release',
+  RAFFLE = 'raffle',
+  MEETUP = 'meetup',
+  CONVENTION = 'convention',
+  WORKSHOP = 'workshop',
+  SALE = 'sale'
+}
+
+enum EventStatus {
+  UPCOMING = 'upcoming',
+  LIVE = 'live',
+  ENDED = 'ended',
+  CANCELLED = 'cancelled'
+}
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
 import Image from 'next/image';

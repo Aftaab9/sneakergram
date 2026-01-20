@@ -5,8 +5,24 @@ import { useEventStore } from '@/stores/eventStore';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFilters } from '@/components/events/EventFilters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { EventType, EventStatus } from '@/types';
 import { Calendar } from 'lucide-react';
+
+// Define locally to avoid import issues with Vercel build cache
+enum EventType {
+  RELEASE = 'release',
+  RAFFLE = 'raffle',
+  MEETUP = 'meetup',
+  CONVENTION = 'convention',
+  WORKSHOP = 'workshop',
+  SALE = 'sale'
+}
+
+enum EventStatus {
+  UPCOMING = 'upcoming',
+  LIVE = 'live',
+  ENDED = 'ended',
+  CANCELLED = 'cancelled'
+}
 
 /**
  * Events Page - Instagram-style events feed
