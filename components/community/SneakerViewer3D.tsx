@@ -1,111 +1,122 @@
 /**
  * SneakerViewer3D Component
- * Interactive 3D sneaker viewer for the community page
+ * Interactive CSS-based 3D sneaker viewer for the community page
+ * Uses CSS transforms instead of Three.js to avoid SSR/hydration issues
  */
 
 'use client';
 
-import { Suspense, useRef, useEffect, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, ContactShadows, Float, Html } from '@react-three/drei';
-import type { Group } from 'three';
-import * as THREE from 'three';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { RotateCcw, ZoomIn, Maximize2 } from 'lucide-react';
-
-const MODEL_PATH = '/data/best/uploads_files_4278121_Nike_Air_Shoes.glb';
+import Image from 'next/image';
+import { RotateCcw, ZoomIn, X, Play, Pause } from 'lucide-react';
 
 interface SneakerViewer3DProps {
   onClose?: () => void;
   isFullscreen?: boolean;
 }
 
-/**
- * Nike Air Shoes 3D Model Component
- */
-function NikeAirShoes() {
-  const groupRef = useRef<Group>(null);
-  const { scene } = useGLTF(MODEL_PATH);
-  
-  useEffect(() => {
-    if (scene) {
-      scene.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          if (child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.envMapIntensity = 1.5;
-            child.material.needsUpdate = true;
-          }
-        }
-      });
-    }
-  }, [scene]);
-  
-  useFrame((state) => {
-    if (groupRef.current) {
-      // Gentle floating animation
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-    }
-  });
-  
-  return (
-    <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.3}>
-      <group ref={groupRef} scale={[3, 3, 3]} position={[0, 0, 0]}>
-        <primitive object={scene} />
-      </group>
-    </Float>
-  );
-}
+// Multiple angles of the sneaker for pseudo-3D effect
+const SNEAKER_IMAGES = [
+  '/data/best/air jordan red.png',
+  '/data/best/nike jordan black and reds.png',
+  '/data/best/Air jordan blue.jpg',
+  '/data/best/stylish-yellow-black-sneakers-free-png.png',
+];
 
 /**
- * Loading Fallback
- */
-function LoadingFallback() {
-  return (
-    <Html center>
-      <div className="flex flex-col items-center gap-2">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted">Loading 3D Model...</p>
-      </div>
-    </Html>
-  );
-}
-
-/**
- * Main SneakerViewer3D Component
+ * Main SneakerViewer3D Component - CSS-based 3D effect
  */
 export function SneakerViewer3D({ onClose, isFullscreen = false }: SneakerViewer3DProps) {
-  const [hasError, setHasError] = useState(false);
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAutoRotate, setIsAutoRotate] = useState(true);
+  const [zoom, setZoom] = useState(1);
+  const [currentImage, setCurrentImage] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastPosition = useRef({ x: 0, y: 0 });
 
+  // Auto-rotate effect
   useEffect(() => {
-    // Check if WebGL is supported
-    try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) {
-        setHasError(true);
-      }
-    } catch {
-      setHasError(true);
-    }
-  }, []);
+    if (!isAutoRotate || isDragging) return;
+    
+    const interval = setInterval(() => {
+      setRotation(prev => ({
+        ...prev,
+        y: prev.y + 1,
+      }));
+    }, 30);
 
-  // Preload model
+    return () => clearInterval(interval);
+  }, [isAutoRotate, isDragging]);
+
+  // Change image based on rotation
   useEffect(() => {
-    useGLTF.preload(MODEL_PATH);
-  }, []);
+    const normalizedY = ((rotation.y % 360) + 360) % 360;
+    const imageIndex = Math.floor(normalizedY / 90) % SNEAKER_IMAGES.length;
+    setCurrentImage(imageIndex);
+  }, [rotation.y]);
 
-  if (hasError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-card rounded-xl border border-border">
-        <div className="text-center p-8">
-          <p className="text-muted mb-2">3D viewer not supported</p>
-          <p className="text-xs text-muted/60">Your browser doesn&apos;t support WebGL</p>
-        </div>
-      </div>
-    );
-  }
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setIsAutoRotate(false);
+    lastPosition.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - lastPosition.current.x;
+    const deltaY = e.clientY - lastPosition.current.y;
+    
+    setRotation(prev => ({
+      x: Math.max(-30, Math.min(30, prev.x - deltaY * 0.5)),
+      y: prev.y + deltaX * 0.5,
+    }));
+    
+    lastPosition.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setIsAutoRotate(false);
+    const touch = e.touches[0];
+    lastPosition.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - lastPosition.current.x;
+    const deltaY = touch.clientY - lastPosition.current.y;
+    
+    setRotation(prev => ({
+      x: Math.max(-30, Math.min(30, prev.x - deltaY * 0.5)),
+      y: prev.y + deltaX * 0.5,
+    }));
+    
+    lastPosition.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom(prev => Math.max(0.5, Math.min(2, prev - e.deltaY * 0.001)));
+  };
+
+  const resetView = () => {
+    setRotation({ x: 0, y: 0 });
+    setZoom(1);
+    setIsAutoRotate(true);
+  };
 
   return (
     <motion.div
@@ -120,10 +131,18 @@ export function SneakerViewer3D({ onClose, isFullscreen = false }: SneakerViewer
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-foreground">Nike Air Shoes</h3>
-            <p className="text-xs text-muted">Interactive 3D Model</p>
+            <p className="text-xs text-muted">Interactive 3D View</p>
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setIsAutoRotate(!isAutoRotate)}
+              className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+              aria-label={isAutoRotate ? 'Pause rotation' : 'Play rotation'}
+            >
+              {isAutoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={resetView}
               className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
               aria-label="Reset view"
             >
@@ -135,76 +154,81 @@ export function SneakerViewer3D({ onClose, isFullscreen = false }: SneakerViewer
                 className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                 aria-label="Close"
               >
-                <Maximize2 className="w-4 h-4" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* 3D Canvas */}
-      <Canvas
-        shadows
-        camera={{ position: [0, 1, 5], fov: 45 }}
-        style={{ background: 'transparent' }}
-        dpr={[1, 2]}
-        gl={{ 
-          antialias: true, 
-          alpha: true,
-          powerPreference: 'high-performance',
-        }}
-        onCreated={({ gl }) => {
-          gl.setClearColor(0x000000, 0);
-        }}
+      {/* 3D Viewer Area */}
+      <div
+        ref={containerRef}
+        className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onWheel={handleWheel}
+        style={{ perspective: '1000px' }}
       >
-        {/* Lighting */}
-        <ambientLight intensity={0.4} />
-        <spotLight
-          position={[10, 10, 10]}
-          angle={0.15}
-          penumbra={1}
-          intensity={1}
-          castShadow
+        {/* Sneaker with 3D transform */}
+        <motion.div
+          className="relative w-64 h-64 md:w-80 md:h-80"
+          style={{
+            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale(${zoom})`,
+            transformStyle: 'preserve-3d',
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+          }}
+        >
+          {/* Main sneaker image */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Image
+              src={SNEAKER_IMAGES[currentImage]}
+              alt="Nike Air Shoes"
+              fill
+              className="object-contain drop-shadow-2xl"
+              style={{ 
+                filter: 'drop-shadow(0 20px 40px rgba(138, 43, 226, 0.4))',
+              }}
+              unoptimized
+              priority
+              draggable={false}
+            />
+          </div>
+
+          {/* Reflection effect */}
+          <div 
+            className="absolute inset-0 flex items-center justify-center opacity-20 blur-sm"
+            style={{
+              transform: 'scaleY(-1) translateY(100%)',
+              maskImage: 'linear-gradient(to bottom, transparent, black)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent, black)',
+            }}
+          >
+            <Image
+              src={SNEAKER_IMAGES[currentImage]}
+              alt=""
+              fill
+              className="object-contain"
+              unoptimized
+              draggable={false}
+              aria-hidden="true"
+            />
+          </div>
+        </motion.div>
+
+        {/* Glow effect */}
+        <div 
+          className="absolute w-48 h-48 rounded-full bg-primary/20 blur-3xl pointer-events-none"
+          style={{
+            transform: `translateX(${rotation.y * 0.5}px) translateY(${rotation.x * 0.5}px)`,
+          }}
         />
-        <spotLight
-          position={[-10, 5, -10]}
-          angle={0.3}
-          penumbra={1}
-          intensity={0.5}
-          color="#ff6b35"
-        />
-        <pointLight position={[0, -5, 0]} intensity={0.3} color="#8b5cf6" />
-        
-        {/* Environment for reflections */}
-        <Environment preset="city" />
-        
-        {/* 3D Model */}
-        <Suspense fallback={<LoadingFallback />}>
-          <NikeAirShoes />
-        </Suspense>
-        
-        {/* Shadow */}
-        <ContactShadows
-          position={[0, -1.5, 0]}
-          opacity={0.4}
-          scale={10}
-          blur={2}
-          far={4}
-        />
-        
-        {/* Controls */}
-        <OrbitControls
-          enableZoom={true}
-          enablePan={false}
-          enableRotate={true}
-          autoRotate={true}
-          autoRotateSpeed={2}
-          minDistance={3}
-          maxDistance={10}
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 1.5}
-        />
-      </Canvas>
+      </div>
 
       {/* Instructions */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
@@ -216,6 +240,18 @@ export function SneakerViewer3D({ onClose, isFullscreen = false }: SneakerViewer
             <ZoomIn className="w-3 h-3" /> Scroll to zoom
           </span>
         </div>
+      </div>
+
+      {/* Image indicator dots */}
+      <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-1">
+        {SNEAKER_IMAGES.map((_, index) => (
+          <div
+            key={index}
+            className={`w-1.5 h-1.5 rounded-full transition-colors ${
+              index === currentImage ? 'bg-primary' : 'bg-white/30'
+            }`}
+          />
+        ))}
       </div>
     </motion.div>
   );

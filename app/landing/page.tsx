@@ -4,20 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
-
-// Dynamically import 3D component with no SSR
-const Scene3DLanding = dynamic(
-  () => import('@/components/3d/Scene3DLanding').then(mod => mod.default),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    ),
-  }
-);
 
 // Fallback images
 const LANDING_IMAGES = [
@@ -41,7 +27,6 @@ export default function LandingPage() {
   const router = useRouter();
   const [isZooming, setIsZooming] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
-  const [use3D, setUse3D] = useState(true);
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
   const [mounted, setMounted] = useState(false);
 
@@ -58,6 +43,8 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: e.clientX / window.innerWidth,
@@ -66,16 +53,16 @@ export default function LandingPage() {
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [mounted]);
 
   const handleEnter = () => {
     setIsZooming(true);
     setTimeout(() => router.push('/login'), 600);
   };
 
-  const handle3DError = () => {
-    setUse3D(false);
-  };
+  // Calculate parallax offset based on mouse position
+  const parallaxX = (mousePosition.x - 0.5) * 30;
+  const parallaxY = (mousePosition.y - 0.5) * 30;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
@@ -108,41 +95,61 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* 3D Sneaker Model or Fallback Image */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        {mounted && use3D ? (
-          <div className="w-full h-full max-w-[600px] max-h-[600px]">
-            <Scene3DLanding 
-              mousePosition={mousePosition} 
-              isZooming={isZooming}
-              onError={handle3DError}
-            />
+      {/* Sneaker Display with CSS 3D Effect */}
+      <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '1000px' }}>
+        <motion.div
+          initial={{ scale: 1, rotateX: 0, rotateY: -5 }}
+          animate={isZooming 
+            ? { scale: 15, opacity: 0, rotateX: 0, rotateY: 0 } 
+            : { 
+                y: [0, -20, 0], 
+                rotateY: [-5, 5, -5], 
+                rotateX: [parallaxY * 0.1, parallaxY * 0.1, parallaxY * 0.1],
+                scale: [1, 1.05, 1] 
+              }
+          }
+          transition={isZooming 
+            ? { duration: 0.6, ease: 'easeInOut' } 
+            : { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+          }
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: mounted ? `translateX(${parallaxX}px) translateY(${parallaxY}px)` : undefined,
+          }}
+          className="relative w-[280px] h-[280px] md:w-[400px] md:h-[400px]"
+        >
+          <Image
+            src={LANDING_IMAGES[currentImage]}
+            alt="Featured Sneaker"
+            fill
+            className="object-contain drop-shadow-2xl"
+            priority
+            unoptimized
+            style={{ filter: 'drop-shadow(0 20px 40px rgba(138, 43, 226, 0.4))' }}
+          />
+          
+          {/* Glow effect */}
+          <div className="absolute inset-0 -z-10 blur-3xl opacity-50">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 via-primary/30 to-pink-500/30 rounded-full" />
           </div>
-        ) : (
-          <motion.div
-            initial={{ scale: 1, rotate: -5 }}
-            animate={isZooming 
-              ? { scale: 15, opacity: 0 } 
-              : { y: [0, -20, 0], rotate: [-5, 5, -5], scale: [1, 1.05, 1] }
-            }
-            transition={isZooming 
-              ? { duration: 0.6, ease: 'easeInOut' } 
-              : { duration: 4, repeat: Infinity, ease: 'easeInOut' }
-            }
-            className="relative w-[280px] h-[280px] md:w-[400px] md:h-[400px]"
-          >
-            <Image
-              src={LANDING_IMAGES[currentImage]}
-              alt="Featured Sneaker"
-              fill
-              className="object-contain drop-shadow-2xl"
-              priority
-              unoptimized
-              style={{ filter: 'drop-shadow(0 20px 40px rgba(138, 43, 226, 0.4))' }}
-            />
-          </motion.div>
-        )}
+        </motion.div>
       </div>
+
+      {/* Image indicator dots */}
+      {mounted && !isZooming && (
+        <div className="absolute bottom-32 left-0 right-0 flex justify-center gap-2 z-10">
+          {LANDING_IMAGES.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentImage(index)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentImage ? 'bg-primary w-4' : 'bg-white/30 hover:bg-white/50'
+              }`}
+              aria-label={`View sneaker ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* UI Overlay */}
       {!isZooming && (
@@ -169,16 +176,6 @@ export default function LandingPage() {
             transition={{ delay: 0.4 }}
             className="flex flex-col items-center gap-4 pointer-events-auto"
           >
-            {/* 3D Toggle */}
-            {mounted && (
-              <button
-                onClick={() => setUse3D(!use3D)}
-                className="text-xs text-muted hover:text-foreground transition-colors mb-2"
-              >
-                {use3D ? '🎮 3D Mode' : '🖼️ 2D Mode'} - Tap to switch
-              </button>
-            )}
-
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

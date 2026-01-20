@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Home, Search, ShoppingBag, Send, User, Sparkles } from 'lucide-react';
+import { Home, Search, ShoppingBag, Send, User, Sparkles, Calendar, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -48,6 +48,8 @@ export default function MainLayout({
   const navItems = [
     { name: 'Home', icon: Home, href: '/feed' },
     { name: 'Search', icon: Search, href: '/explore' },
+    { name: 'Community', icon: Users, href: '/community' },
+    { name: 'Events', icon: Calendar, href: '/events' },
     { name: 'Marketplace', icon: ShoppingBag, href: '/marketplace' },
     { name: 'Services', icon: Sparkles, href: '/services' },
     { name: 'Messages', icon: Send, href: '/messages' },
