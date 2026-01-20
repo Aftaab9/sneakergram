@@ -1,5 +1,5 @@
 /**
- * Community Page - Reddit-like discussion forums
+ * Community Page - Reddit-like discussion forums with 3D Sneaker Viewer
  */
 
 'use client';
@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { 
   ArrowBigUp, 
   ArrowBigDown, 
@@ -16,7 +17,10 @@ import {
   Plus,
   Users,
   TrendingUp,
-  Clock
+  Clock,
+  Box,
+  X,
+  Sparkles
 } from 'lucide-react';
 import { useCommunityStore, CommunityPost } from '@/stores/communityStore';
 import { getUserById } from '@/lib/mockData';
@@ -26,7 +30,80 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
+// Dynamically import 3D viewer to avoid SSR issues
+const SneakerViewer3D = dynamic(
+  () => import('@/components/community/SneakerViewer3D').then(mod => mod.SneakerViewer3D),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full aspect-square bg-card rounded-xl border border-border flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    ),
+  }
+);
+
 type SortOption = 'hot' | 'new' | 'top';
+
+// Featured Indian Bridal Sneakers
+const FEATURED_SNEAKERS = [
+  {
+    id: 'red-ghungroo',
+    name: 'Red Ghungroo Sneakers',
+    image: '/data/best/red ghungroo.jpg',
+    description: 'Traditional bells meet modern style',
+    likes: 2847,
+  },
+  {
+    id: 'sangeet-1',
+    name: 'Sangeet Gold Embroidery',
+    image: '/data/best/sangeet sneakers 1.jpg',
+    description: 'Perfect for dancing all night',
+    likes: 1923,
+  },
+  {
+    id: 'sangeet-3',
+    name: 'Sangeet Mirror Work',
+    image: '/data/best/sangeet sneakers 3.jpg',
+    description: 'Sparkle with every step',
+    likes: 1654,
+  },
+  {
+    id: 'saree',
+    name: 'Saree Sneakers',
+    image: '/data/best/saree sneakers.avif',
+    description: 'Breaking stereotypes beautifully',
+    likes: 3124,
+  },
+];
+
+function FeaturedSneakerCard({ sneaker, onClick }: { sneaker: typeof FEATURED_SNEAKERS[0]; onClick: () => void }) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="relative aspect-square rounded-xl overflow-hidden group"
+    >
+      <Image
+        src={sneaker.image}
+        alt={sneaker.name}
+        fill
+        className="object-cover transition-transform group-hover:scale-110"
+        unoptimized
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-3">
+        <h4 className="font-semibold text-sm text-white truncate">{sneaker.name}</h4>
+        <p className="text-xs text-white/70 truncate">{sneaker.description}</p>
+        <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+          <Sparkles className="w-3 h-3" />
+          <span>{sneaker.likes.toLocaleString()} likes</span>
+        </div>
+      </div>
+    </motion.button>
+  );
+}
 
 function PostCard({ post }: { post: CommunityPost }) {
   const { votePost, addComment } = useCommunityStore();
@@ -241,6 +318,8 @@ export default function CommunityPage() {
   const { communities, posts, loading, loadCommunities } = useCommunityStore();
   const [sortBy, setSortBy] = useState<SortOption>('hot');
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [show3DViewer, setShow3DViewer] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const { createPost } = useCommunityStore();
@@ -278,6 +357,10 @@ export default function CommunityPage() {
     toast.success('Post created!');
   };
 
+  const handleSneakerClick = (sneaker: typeof FEATURED_SNEAKERS[0]) => {
+    setSelectedImage(sneaker.image);
+  };
+
   if (!community) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -301,7 +384,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Community Info */}
-      <div className="max-w-3xl mx-auto px-4 -mt-12 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 -mt-12 relative z-10">
         <div className="flex items-end gap-4 mb-4">
           <div className="w-20 h-20 rounded-full border-4 border-black overflow-hidden">
             <Image
@@ -326,6 +409,50 @@ export default function CommunityPage() {
         </div>
 
         <p className="text-sm text-gray-300 mb-6">{community.description}</p>
+
+        {/* Featured Sneakers Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Featured Designs
+            </h2>
+            <button
+              onClick={() => setShow3DViewer(!show3DViewer)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary/20 text-primary rounded-full text-sm hover:bg-primary/30 transition-colors"
+            >
+              <Box className="w-4 h-4" />
+              {show3DViewer ? 'Hide 3D' : 'View in 3D'}
+            </button>
+          </div>
+
+          {/* 3D Viewer */}
+          <AnimatePresence>
+            {show3DViewer && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mb-4 overflow-hidden"
+              >
+                <div className="max-w-md mx-auto">
+                  <SneakerViewer3D />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Featured Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {FEATURED_SNEAKERS.map((sneaker) => (
+              <FeaturedSneakerCard
+                key={sneaker.id}
+                sneaker={sneaker}
+                onClick={() => handleSneakerClick(sneaker)}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* Sort & Create */}
         <div className="flex items-center justify-between mb-4">
@@ -422,6 +549,41 @@ export default function CommunityPage() {
           </div>
         )}
       </div>
+
+      {/* Image Lightbox */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="relative max-w-2xl max-h-[80vh] w-full aspect-square"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={selectedImage}
+                alt="Featured sneaker"
+                fill
+                className="object-contain rounded-lg"
+                unoptimized
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
