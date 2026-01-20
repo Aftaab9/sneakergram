@@ -17,6 +17,10 @@ export const BEST_SNEAKER_IMAGES = {
   jordanRetro: '/data/best/jordan retro.jpg',
   blackCats: '/data/best/black cats.jpg',
   jordanPineGreen: '/data/best/nike-sb-x-air-jordan-4-pine-green-dr5415-103-release-date.avif',
+  airJordanRed: '/data/best/air jordan red.png',
+  airJordan3Animal: '/data/best/Air-Jordan-3-Animal-Instinct-2019-CK4344-002.jpg',
+  travisScottFragment: '/data/best/giay-air-jordan-1-high-travis-scott-x-fragment-best-quality-2-scaled-800x800.jpg',
+  reversePanda: '/data/best/afab7b75-2d2b-4622-803c-d640e7a71578_19.02.2024_AirJordanReversePanda__1200x1200.jpg',
   
   // Adidas
   adidasForum: '/data/best/Adidas_forum1.jpg',
@@ -32,10 +36,10 @@ export const BEST_SNEAKER_IMAGES = {
   lv1: '/data/best/LV_12.jpg',
   lv2: '/data/best/LV.avif',
   
-  // New additions
+  // Other
   heroSneaker: '/data/best/360_F_410655365_MjietOoPZAMAdqA74M6EXqRL3F8g5dHH.jpg',
   yellowBlackSneaker: '/data/best/stylish-yellow-black-sneakers-free-png.png',
-  airJordanRed: '/data/best/air jordan red.png',
+  mysteryBox: '/data/best/9b86aaa8_e1bf_4808_823b_1fa5c5da3bc0.png',
 };
 
 // Array of all best images for easy iteration
@@ -52,7 +56,7 @@ export function getBestImagesByCategory(category: 'nike' | 'jordan' | 'adidas' |
     case 'nike':
       return [BEST_SNEAKER_IMAGES.airForces1, BEST_SNEAKER_IMAGES.nikeAirForces, BEST_SNEAKER_IMAGES.nikeRedForces, BEST_SNEAKER_IMAGES.nikePinks];
     case 'jordan':
-      return [BEST_SNEAKER_IMAGES.jordanBlue, BEST_SNEAKER_IMAGES.jordanBlackRed, BEST_SNEAKER_IMAGES.jordanBlackYellow, BEST_SNEAKER_IMAGES.jordanRetro, BEST_SNEAKER_IMAGES.blackCats, BEST_SNEAKER_IMAGES.jordanPineGreen];
+      return [BEST_SNEAKER_IMAGES.jordanBlue, BEST_SNEAKER_IMAGES.jordanBlackRed, BEST_SNEAKER_IMAGES.jordanBlackYellow, BEST_SNEAKER_IMAGES.jordanRetro, BEST_SNEAKER_IMAGES.blackCats, BEST_SNEAKER_IMAGES.jordanPineGreen, BEST_SNEAKER_IMAGES.airJordanRed, BEST_SNEAKER_IMAGES.airJordan3Animal, BEST_SNEAKER_IMAGES.travisScottFragment, BEST_SNEAKER_IMAGES.reversePanda];
     case 'adidas':
       return [BEST_SNEAKER_IMAGES.adidasForum, BEST_SNEAKER_IMAGES.adidasStand, BEST_SNEAKER_IMAGES.adidasSuperstar, BEST_SNEAKER_IMAGES.adidas];
     case 'newbalance':
